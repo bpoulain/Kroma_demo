@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>404 — Kroma</title>
+<script>
+  // Relais : l'application affiche sa propre page introuvable (scripts/page-404.js).
+  var cible404 = function cible404(loc, racine) {
+  if (loc.hash) return null; // déjà passé par le relais : pas de boucle
+  const seg = loc.hostname.slice(-10) === '.github.io' && loc.pathname.split('/')[1];
+  // Racine connue (siteUrl) ; hors d'elle (npm run dev, autre hôte), déduite de l'adresse.
+  const base = racine && loc.pathname.indexOf(racine) === 0 ? racine : seg ? '/' + seg + '/' : '/';
+  if (loc.pathname.indexOf(base) !== 0 || loc.pathname === base) return null;
+  return base + '#/' + loc.pathname.slice(base.length).replace(/\/+$/, '');
+};
+  var cible = cible404(location, "/Kroma_demo/");
+  if (cible) location.replace(cible);
+  else document.addEventListener('DOMContentLoaded', function () {
+    var seg = !"/Kroma_demo/" && location.hostname.slice(-10) === '.github.io' && location.pathname.split('/')[1];
+    if (seg) document.querySelectorAll('.accueil').forEach(function (a) { a.href = '/' + seg + '/'; });
+  });
+</script>
+<style>
+  body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 1rem;
+    background: #fafafa; color: #18181b;
+    font-family: 'Geist Variable', 'Geist', ui-sans-serif, system-ui, -apple-system,
+                  BlinkMacSystemFont, 'Segoe UI', sans-serif; line-height: 1.5; }
+  main { max-width: 32rem; }
+  h1 { font-size: 1.5rem; margin: 0 0 0.5rem; }
+  p { margin: 0 0 1rem; color: #52525b; }
+  a { color: #27272a; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Page not found</h1>
+  <p>This address matches no page of Kroma.</p>
+  <p><a class="accueil" href="/Kroma_demo/">Back to home</a></p>
+  <div lang="fr">
+  <h1>Page introuvable</h1>
+  <p>Cette adresse ne correspond à aucune page de Kroma.</p>
+  <p><a class="accueil" href="/Kroma_demo/">Retour à l'accueil</a></p>
+  </div>
+</main>
+</body>
+</html>
