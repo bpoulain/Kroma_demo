@@ -1,0 +1,316 @@
+<!-- Kroma documentation (en) — served outside the bundle, read by src/docs-loader.js (specification
+     0.11.0, PRD J15). One <section id> per topic; its first <h2> is its title in the contents.
+     Written from the PRD, the specifications and the cited sources, checked on 2026-11-17. -->
+
+<section id="kroma">
+  <h2>Kroma at a glance</h2>
+  <p>
+    Kroma builds a <strong>parametric colour system</strong>: instead of picking each colour by
+    hand, you set <strong>curves</strong> (lightness, chroma or saturation) shared by every hue of a
+    category. Changing a curve changes every ramp of that category, and the progression stays
+    consistent from one hue to the next.
+  </p>
+  <dl>
+    <dt>Category</dt>
+    <dd>
+      Two categories: <strong>colored</strong> and <strong>neutral</strong>. Each has its own curves
+      and colour space.
+    </dd>
+    <dt>Ramp</dt>
+    <dd>
+      One hue in steps, from lightest to darkest (for example <code>blue</code> from
+      <code>050</code> to <code>950</code>).
+    </dd>
+    <dt>Step</dt>
+    <dd>
+      A position on the ramp. The number of steps (2 to 20) is a system setting; their labels follow
+      from it (1000 ÷ (n + 1) × i, on three digits).
+    </dd>
+    <dt>Pure grey</dt>
+    <dd>
+      A neutral ramp can be pure grey: it keeps the neutral lightness curve, with no chroma at all
+      (set in the Neutral curves panel).
+    </dd>
+  </dl>
+  <p>
+    Two places: <strong>Ramps</strong>, where you tune and check colours, and
+    <strong>Theme</strong>, where you name semantic tokens and declare the pairs to check.
+  </p>
+</section>
+
+<section id="spaces">
+  <h2>Colour spaces and gamut</h2>
+  <p>
+    <strong>OKLab</strong> is a perceptual colour space proposed by Björn Ottosson in December 2020:
+    an equal distance roughly matches an equal perceived difference. <strong>OKLCH</strong> is its
+    cylindrical form: <em>L</em> (lightness, 0 to 1), <em>C</em> (chroma, how intense the colour is)
+    and <em>h</em> (hue, in degrees). The <code>oklab()</code> and <code>oklch()</code>
+    functions are part of CSS Color 4.
+  </p>
+  <p>
+    <strong>OKHSL</strong>, by the same author (2021), keeps the shape of HSL (hue, saturation,
+    lightness) on top of OKLab: a saturation from 0 to 1 stays inside the sRGB gamut. In Kroma, the
+    same hue value gives the same hue in OKLCH and in OKHSL.
+  </p>
+  <p>
+    The <strong>gamut</strong> is the set of colours a screen can show. An OKLCH colour can fall
+    outside sRGB (common screens) or Display P3 (wide-gamut screens). In the Ramps toolbar (Out of gamut),
+    <em>Clip</em> shows the colour brought back into sRGB; <em>Warn</em> shows the original colour
+    and flags those that fall outside.
+  </p>
+  <p>
+    Whatever this setting, Kroma computes every contrast and exports every hexadecimal on the
+    <strong>sRGB fallback</strong>: the colour brought back into sRGB. The exported CSS also carries
+    the <code>oklch()</code> value brought into P3, for screens that can show it.
+  </p>
+</section>
+
+<section id="curves">
+  <h2>Curves</h2>
+  <p>
+    Each parameter of a category (lightness, then chroma in OKLCH or saturation in OKHSL) follows a
+    curve along the ramp, from the first step to the last. Six modes:
+  </p>
+  <ul>
+    <li><strong>linear</strong>: an even progression between a minimum and a maximum;</li>
+    <li><strong>parabolic</strong>: one peak, useful for chroma, stronger in the middle;</li>
+    <li>
+      <strong>bezier</strong>: a Bézier curve whose handles you drag; they may leave the frame,
+      values are brought back within bounds when the colour is produced;
+    </li>
+    <li><strong>exponential</strong>: a progression that speeds up;</li>
+    <li><strong>easeInOut</strong>: slow at both ends, fast in the middle;</li>
+    <li><strong>custom</strong>: one value typed for each step.</li>
+  </ul>
+</section>
+
+<section id="tokens">
+  <h2>Primitives and semantic tokens</h2>
+  <p>
+    A <strong>primitive</strong> is a ramp colour, named by its ramp and step
+    (<code>blue-500</code>, <code>slate-100</code>). A <strong>semantic token</strong> names an
+    intent (<code>bg-app</code>, <code>text-muted</code>) and points to one primitive in light and
+    one in dark: the dark theme is built this way, token by token, with no hidden computation.
+  </p>
+  <p>
+    Each token has a <strong>description</strong>: its intent, and what not to use it for. It is
+    exported with the token, so the tools and agents that read the export read it too.
+  </p>
+</section>
+
+<section id="contrast">
+  <h2>Contrast: WCAG 2 and APCA</h2>
+  <p>
+    <strong>WCAG 2</strong> (a W3C Recommendation; version 2.2 of 12 December 2024) measures a
+    luminance <strong>ratio</strong>, from 1:1 to 21:1, the same whichever colour comes first. Its
+    success criteria:
+  </p>
+  <ul>
+    <li>1.4.3 Contrast (Minimum), level AA: 4.5:1 for text, 3:1 for large text;</li>
+    <li>1.4.6 Contrast (Enhanced), level AAA: 7:1, and 4.5:1 for large text;</li>
+    <li>
+      1.4.11 Non-text Contrast, level AA: 3:1 for user interface components and graphical objects,
+      against adjacent colours.
+    </li>
+  </ul>
+  <p>
+    <strong>APCA</strong> (Accessible Perceptual Contrast Algorithm) measures an
+    <strong>Lc</strong> (lightness contrast), from 0 to about 105, which depends on the order: text
+    on background is not background on text. Kroma shows its absolute value. APCA is the candidate
+    method for the future WCAG 3, which is not final: it is neither a W3C standard nor a WCAG 2
+    criterion.
+  </p>
+  <h3>Kroma’s usage scale</h3>
+  <p>
+    Kroma ranks each contrast by the most demanding <strong>usage</strong> it allows, on the APCA
+    “Bronze Simple Mode” levels and the WCAG 2 criteria. The scale is fixed: the requirement is
+    declared pair by pair.
+  </p>
+  <table>
+    <thead>
+      <tr>
+        <th scope="col">Usage</th>
+        <th scope="col">APCA</th>
+        <th scope="col">WCAG 2</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Body text, preferred</td>
+        <td>Lc 90</td>
+        <td>7:1</td>
+      </tr>
+      <tr>
+        <td>Body text</td>
+        <td>Lc 75</td>
+        <td>4.5:1</td>
+      </tr>
+      <tr>
+        <td>Content text</td>
+        <td>Lc 60</td>
+        <td>4.5:1</td>
+      </tr>
+      <tr>
+        <td>Large text, headings</td>
+        <td>Lc 45</td>
+        <td>3:1</td>
+      </tr>
+      <tr>
+        <td>Spot text, solid icon</td>
+        <td>Lc 30</td>
+        <td>3:1</td>
+      </tr>
+      <tr>
+        <td>Discernible non-text (border, divider)</td>
+        <td>Lc 15</td>
+        <td>—</td>
+      </tr>
+    </tbody>
+  </table>
+  <h3>Reference algorithm and displayed algorithm</h3>
+  <p>
+    The system declares a <strong>reference algorithm</strong> (APCA, WCAG 2 or both; APCA by
+    default) in its details: it decides each pair’s verdict. The <strong>displayed</strong>
+    algorithm (toolbar of a ramp’s matrix and of the pairs) only changes the numbers shown.
+  </p>
+</section>
+
+<section id="pairs">
+  <h2>Contrast pairs</h2>
+  <p>
+    A <strong>pair</strong> joins a background token, a text (or element) token and the usage it
+    must meet. Kroma checks it in light and in dark, on the sRGB fallback, and gives a verdict by
+    the reference algorithm. The header counts the pairs that pass in both themes.
+  </p>
+  <p>
+    A failing pair is fixed from its detail: for its text token and its background token, each step
+    of the ramp shows the verdict it would give, and how many other pairs would fail.
+  </p>
+  <h3>Borders</h3>
+  <p>
+    Criterion 1.4.11 asks that a component boundary stand out from what surrounds it. Two pairs can
+    therefore matter for a border: against the <strong>component background</strong>, and against
+    the <strong>container background</strong>. When the component has a solid background different
+    from the container, that background often draws the boundary on its own. This is a reading of
+    the criterion, not a rule it states. The <code>default</code> preset declares both; the rebuilt
+    design-system presets keep their source’s choice.
+  </p>
+</section>
+
+<section id="surfaces">
+  <h2>Surface differences: ΔL* and ΔE2000</h2>
+  <p>
+    Two neighbouring surfaces (the app background and a card’s) often need to stand apart without
+    carrying text. No standard sets a threshold for this. On request (the ΔL* · ΔE2000 button of a ramp’s matrix and of the pairs), Kroma can show two
+    measures for information, with no verdict:
+  </p>
+  <ul>
+    <li><strong>ΔL*</strong>: the lightness difference in CIE Lab, from 0 to 100;</li>
+    <li>
+      <strong>ΔE2000</strong> (CIEDE2000, CIE publication 142-2001): the perceived difference
+      between two colours, lightness, chroma and hue included. The Color.js documentation cites 2.3
+      as the “just noticeable difference” of most ΔE formulas.
+    </li>
+  </ul>
+</section>
+
+<section id="formats">
+  <h2>Export formats</h2>
+  <p>
+    <strong>DTCG 2025.10</strong>: the technical reports of the W3C Design Tokens Community Group
+    (28 October 2025), in three modules, Format, Color and Resolver. It is a stable community group
+    report, not a W3C standard. Kroma exports a single <code>.resolver.json</code> file, with the
+    primitives and both contexts (light, dark) written inside. Each colour carries its OKLCH
+    components and its hexadecimal (the sRGB fallback). The <code>io.github.bpoulain.kroma</code>
+    extension carries the whole system: curves, each primitive’s recipe, descriptions and pairs. It
+    is what Kroma trusts when it reopens the file.
+  </p>
+  <p>
+    <strong>CSS</strong>: variables, with the sRGB fallback, then the <code>oklch()</code> value
+    brought into P3 inside an <code>@supports</code> and
+    <code>@media (color-gamut: p3)</code> block. Dark theme by choice:
+    <code>prefers-color-scheme</code> media query, <code>.dark</code> class or
+    <code>[data-theme="dark"]</code> attribute.
+  </p>
+</section>
+
+<section id="import">
+  <h2>Importing an existing system</h2>
+  <p>
+    Kroma reads a DTCG file (Tokens Studio included) or CSS variables. The file’s structure proposes
+    the ramps, the values check them; you confirm. Kroma then looks for curves that reproduce these
+    colours: the imported system stays parametric.
+  </p>
+  <p>
+    The gap between each original colour and its reproduction is measured in
+    <strong>ΔE OK × 100</strong> (distance in OKLab, times 100): the largest gap first, then the
+    median, then each colour. A neutral ramp whose colours all have a chroma under 0.005 (a gap of
+    0.5) is proposed as pure grey.
+  </p>
+</section>
+
+<section id="presets">
+  <h2>Presets</h2>
+  <p>
+    Presets show what the curves can do: OKLCH and OKHSL, modes, numbers of steps.
+  </p>
+  <p>
+    Loading a preset replaces the whole system, after confirmation; “Export first” keeps the current
+    one.
+  </p>
+</section>
+
+<section id="sources">
+  <h2>Sources</h2>
+  <p>Checked on 17 November 2026.</p>
+  <ul>
+    <li>
+      <a href="https://www.designtokens.org/tr/2025.10/" target="_blank" rel="noopener noreferrer"
+        >Design Tokens Technical Reports 2025.10</a
+      >
+      — Design Tokens Community Group, 28 October 2025.
+    </li>
+    <li>
+      <a href="https://www.w3.org/TR/WCAG22/" target="_blank" rel="noopener noreferrer"
+        >Web Content Accessibility Guidelines (WCAG) 2.2</a
+      >
+      — W3C Recommendation, 12 December 2024.
+    </li>
+    <li>
+      <a
+        href="https://git.apcacontrast.com/documentation/APCA_in_a_Nutshell"
+        target="_blank"
+        rel="noopener noreferrer"
+        >APCA in a Nutshell</a
+      >
+      — Lc levels and “Bronze Simple Mode”.
+    </li>
+    <li>
+      <a href="https://www.w3.org/TR/css-color-4/" target="_blank" rel="noopener noreferrer"
+        >CSS Color Module Level 4</a
+      >
+      — W3C, <code>oklab()</code>, <code>oklch()</code>, gamut mapping.
+    </li>
+    <li>
+      <a href="https://bottosson.github.io/posts/oklab/" target="_blank" rel="noopener noreferrer"
+        >A perceptual color space for image processing</a
+      >
+      — Björn Ottosson, 23 December 2020 (OKLab).
+    </li>
+    <li>
+      <a
+        href="https://bottosson.github.io/posts/colorpicker/"
+        target="_blank"
+        rel="noopener noreferrer"
+        >Two new color spaces for color picking – Okhsv and Okhsl</a
+      >
+      — Björn Ottosson, 8 September 2021.
+    </li>
+    <li>
+      <a href="https://colorjs.io/docs/color-difference" target="_blank" rel="noopener noreferrer"
+        >Color.js, Color difference</a
+      >
+      — ΔE2000 and the “just noticeable difference”.
+    </li>
+  </ul>
+</section>
